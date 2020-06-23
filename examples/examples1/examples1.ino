@@ -1,4 +1,4 @@
-#include "flash_memory.h"
+#include "FlashMemory.h"
 
 Flash flash(10);
 byte arr[] = {1, 2, 3, 4, 5, 6, 7, 8};
