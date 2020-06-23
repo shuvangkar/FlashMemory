@@ -14,6 +14,7 @@ void setup(void)
   //flash.printPage(10);
   flash.writeBytes(6016, arr, sizeof(arr));
   flash.readBytes(6016, readArr, sizeof(readArr));
+  Serial.println("Setup done");
 }
 
 void loop(void) 
