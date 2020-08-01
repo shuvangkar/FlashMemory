@@ -8,6 +8,7 @@ class Flash
 {
   public:
     Flash(byte chipSelect);
+    Flash(byte CS, uint32_t startAddr, uint16_t packetSz);
     void printPage(unsigned int pageNum);
     void printPageBytes(byte *pageBuf);
     void printBytes(byte *buf, byte len);
@@ -17,12 +18,15 @@ class Flash
     void eraseChipData();
   private:
     byte _csPin;
-    byte *_buf;
+    uint32_t _startAddr;
+    uint16_t _packetSz;
+    // byte *_buf;
     void _busyWait();
     byte  *_readPage(unsigned int pageNum, byte *page_buffer);
     void _writePage(unsigned int PageNum, byte *pageBuf);
     void _chipErase();
     void _erasePage(uint16_t pageNum);
+    uint32_t _getNextAddr(uint32_t currentAddr);// the function returns next address for similar type of packet,return zero if no memory available
 };
 #endif
 

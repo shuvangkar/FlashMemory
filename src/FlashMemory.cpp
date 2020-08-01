@@ -25,6 +25,12 @@ Flash::Flash(byte chipSelect)
   _csPin = chipSelect;
   pinMode(_csPin, OUTPUT);
 }
+Flash::Flash(byte CS, uint32_t startAddr, uint16_t packetSz)
+{
+	_csPin = CS;
+    _startAddr = startAddr;
+    _packetSz = packetSz;
+}
 void Flash::begin()
 {
   SPI.begin();
@@ -203,6 +209,31 @@ bool Flash::writeBytes(uint32_t logicalAddr, byte *data, byte length)
     }
   }
 }
+
+ uint32_t Flash::_getNextAddr(uint32_t currentAddr)
+ {
+ 	uint32_t nxtAddr = currentAddr + _packetSz;
+ 	//verify that next generated address is the multiple of packetSz
+ 	uint16_t mod = (nxtAddr - _startAddr) % _packetSz;//if mod = 0. valid next address
+ 	if( mod != 0 )
+ 	{
+ 		//find next valid address, start from current address
+ 		nxtAddr = currentAddr;
+ 		do
+ 		{
+ 			nxtAddr++;
+ 			mod = (nxtAddr - _startAddr) % _packetSz;
+ 			if(nxtAddr > (currentAddr + 2*_packetSz))
+ 			{
+ 				break;
+ 			}
+ 		}while(mod)
+
+ 	}
+ 	return nxtAddr;
+
+ }
+ 
 void Flash::_busyWait()
 {
   digitalWrite(_csPin, HIGH);
