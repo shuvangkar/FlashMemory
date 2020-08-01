@@ -66,21 +66,24 @@ void Flash::printPage(unsigned int pageNum)
   printPageBytes(pageBuf);
 
 }
-void Flash::_readPage(unsigned int pageNum, byte *page_buffer)
+byte  *Flash::_readPage(unsigned int pageNum, byte *page_buffer)
 {
+  byte *buf = page_buffer;
   digitalWrite(_csPin, HIGH);
   digitalWrite(_csPin, LOW);
   SPI.transfer(WB_READ_DATA);
   // Construct the 24-bit address from the 16-bit page
-  SPI.transfer((pageNum >> 8) & 0xFF);
-  SPI.transfer((pageNum >> 0) & 0xFF);
-  SPI.transfer(0);
+  SPI.transfer((pageNum >> 8) & 0xFF); //Least 8 bits
+  SPI.transfer((pageNum >> 0) & 0xFF); //Most 8 bits
+  SPI.transfer(0);					    //MSB of 24 bit address
 
   for (int i = 0; i < 256; ++i) {
-    page_buffer[i] = SPI.transfer(0);
+    buf[i] = SPI.transfer(0);
   }
   digitalWrite(_csPin, HIGH);
   _busyWait();
+
+  return page_buffer;
 
 }
 void Flash::_writePage(unsigned int PageNum, byte *pageBuf)

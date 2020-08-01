@@ -19,7 +19,7 @@ class Flash
     byte _csPin;
     byte *_buf;
     void _busyWait();
-    void _readPage(unsigned int pageNum, byte *page_buffer);
+    byte  *_readPage(unsigned int pageNum, byte *page_buffer);
     void _writePage(unsigned int PageNum, byte *pageBuf);
     void _chipErase();
     void _erasePage(uint16_t pageNum);
