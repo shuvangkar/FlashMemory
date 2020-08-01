@@ -37,6 +37,10 @@ void Flash::begin()
   SPI.setDataMode(0);
   SPI.setBitOrder(MSBFIRST);
 }
+void Flash::setFlashSize(byte sizeMbit)
+{
+	_flashSz = sizeMbit;
+}
 
 void Flash::eraseChipData()
 {
@@ -227,13 +231,22 @@ bool Flash::writeBytes(uint32_t logicalAddr, byte *data, byte length)
  			{
  				break;
  			}
- 		}while(mod)
+ 		}while(mod);
 
+ 	}
+ 	//Check memory availability
+ 	if(_flashSz !=0)
+ 	{
+ 		uint32_t maxSize = (_flashSz * 1000000UL)/8;
+	 	if((nxtAddr+_packetSz)>maxSize)
+	 	{
+	 		return 0;
+	 	}
  	}
  	return nxtAddr;
 
  }
- 
+
 void Flash::_busyWait()
 {
   digitalWrite(_csPin, HIGH);

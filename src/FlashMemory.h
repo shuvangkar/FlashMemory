@@ -9,6 +9,7 @@ class Flash
   public:
     Flash(byte chipSelect);
     Flash(byte CS, uint32_t startAddr, uint16_t packetSz);
+    void setFlashSize(byte sizeMbit);
     void printPage(unsigned int pageNum);
     void printPageBytes(byte *pageBuf);
     void printBytes(byte *buf, byte len);
@@ -20,6 +21,7 @@ class Flash
     byte _csPin;
     uint32_t _startAddr;
     uint16_t _packetSz;
+    byte _flashSz = 0;;
     // byte *_buf;
     void _busyWait();
     byte  *_readPage(unsigned int pageNum, byte *page_buffer);
