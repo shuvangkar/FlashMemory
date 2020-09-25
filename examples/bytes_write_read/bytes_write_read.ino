@@ -1,12 +1,15 @@
 #include "FlashMemory.h"
 
-Flash flash(10); //CS PIN = 10
+Flash flash(5); //CS PIN = 10
 
-byte arr_to_write[] = {1, 2, 3, 4, 5, 6, 7, 8};
+byte arr_to_write[] = {20,30,40,50,60,70};
 byte readArr[8];
 void setup(void)
 {
-
+  pinMode(9,OUTPUT);
+  pinMode(10, OUTPUT);
+  digitalWrite(9,HIGH);
+  digitalWrite(10, LOW);
   Serial.begin(9600);
   Serial.println("");
   flash.begin();
@@ -14,9 +17,9 @@ void setup(void)
   //flash.eraseChipData();
   //flash.printPage(10);
   Serial.println("Writing few bytes in 6016 address");
-  flash.writeBytes(6016, arr_to_write, sizeof(arr_to_write));
+  flash.writeBytes(300, arr_to_write, sizeof(arr_to_write));
   Serial.println("Reading bytes from 6016 address");
-  flash.readBytes(6016, readArr, sizeof(readArr));
+  flash.readBytes(300, readArr, sizeof(readArr));
   Serial.println("Setup done");
 }
 

@@ -16,6 +16,8 @@ class Flash
     bool writeBytes(uint32_t logicalAddr, byte *data, byte length);
     bool readBytes(uint32_t logicalAddr, byte *data, byte length);
     void begin();
+    byte  *_readPage(unsigned int pageNum, byte *page_buffer);
+    void _writePage(unsigned int PageNum, byte *pageBuf);
     void eraseChipData();
   private:
     byte _csPin;
@@ -24,8 +26,7 @@ class Flash
     byte _flashSz = 0;;
     // byte *_buf;
     void _busyWait();
-    byte  *_readPage(unsigned int pageNum, byte *page_buffer);
-    void _writePage(unsigned int PageNum, byte *pageBuf);
+    
     void _chipErase();
     void _erasePage(uint16_t pageNum);
     uint32_t _getNextAddr(uint32_t currentAddr);// the function returns next address for similar type of packet,return zero if no memory available
