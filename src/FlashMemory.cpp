@@ -14,6 +14,7 @@
 #define WB_WRITE_ENABLE       0x06
 #define WB_WRITE_DISABLE      0x04
 #define WB_CHIP_ERASE         0xc7
+#define WB_SECTOR_ERASE       0x20
 #define WB_READ_STATUS_REG_1  0x05
 #define WB_READ_DATA          0x03
 #define WB_PAGE_PROGRAM       0x02
@@ -23,16 +24,19 @@
 Flash::Flash(byte chipSelect)
 {
   _csPin = chipSelect;
-  pinMode(_csPin, OUTPUT);
+  
 }
 Flash::Flash(byte CS, uint32_t startAddr, uint16_t packetSz)
 {
 	_csPin = CS;
-    _startAddr = startAddr;
-    _packetSz = packetSz;
+  _startAddr = startAddr;
+  _packetSz = packetSz;
 }
+
 void Flash::begin()
 {
+  pinMode(_csPin, OUTPUT);
+  digitalWrite(_csPin, HIGH);
   SPI.begin();
   SPI.setDataMode(0);
   SPI.setBitOrder(MSBFIRST);
@@ -40,6 +44,19 @@ void Flash::begin()
 void Flash::setFlashSize(byte sizeMbit)
 {
 	_flashSz = sizeMbit;
+}
+
+void Flash::_writeEnable()
+{
+  digitalWrite(_csPin, LOW);
+  SPI.transfer(WB_WRITE_ENABLE);
+  digitalWrite(_csPin, HIGH);
+}
+void Flash::_writeDisable()
+{
+  digitalWrite(_csPin, LOW);
+  SPI.transfer(WB_WRITE_DISABLE);
+  digitalWrite(_csPin, HIGH);
 }
 
 void Flash::eraseChipData()
@@ -98,24 +115,39 @@ byte  *Flash::_readPage(unsigned int pageNum, byte *page_buffer)
 }
 void Flash::_writePage(unsigned int PageNum, byte *pageBuf)
 {
-  digitalWrite(_csPin, HIGH);
-  digitalWrite(_csPin, LOW);
-  SPI.transfer(WB_WRITE_ENABLE);
+  // digitalWrite(_csPin, HIGH);
+  // digitalWrite(_csPin, LOW);
+  // SPI.transfer(WB_WRITE_ENABLE);
 
-  digitalWrite(_csPin, HIGH);
-  digitalWrite(_csPin, LOW);
+  // digitalWrite(_csPin, HIGH);
+  // digitalWrite(_csPin, LOW);
+  // SPI.transfer(WB_PAGE_PROGRAM);
+  // SPI.transfer((PageNum >>  8) & 0xFF);
+  // SPI.transfer((PageNum >>  0) & 0xFF);
+  // SPI.transfer(0);
+
+  // for (int i = 0; i < 256; ++i) {
+  //   SPI.transfer(pageBuf[i]);
+  // }
+  // digitalWrite(_csPin, HIGH);
+  // digitalWrite(_csPin, LOW);
+  // SPI.transfer(WB_WRITE_DISABLE);
+  // digitalWrite(_csPin, HIGH);
+  // _busyWait();
+  _writeEnable();
+  digitalWrite(_csPin,LOW);
+  uint8_t *p = (uint8_t*)&PageNum;
+
   SPI.transfer(WB_PAGE_PROGRAM);
-  SPI.transfer((PageNum >>  8) & 0xFF);
-  SPI.transfer((PageNum >>  0) & 0xFF);
+  SPI.transfer(p[1]);
+  SPI.transfer(p[0]);
   SPI.transfer(0);
-
-  for (int i = 0; i < 256; ++i) {
+  for (int i = 0; i < 256; ++i) 
+  {
     SPI.transfer(pageBuf[i]);
   }
-  digitalWrite(_csPin, HIGH);
-  digitalWrite(_csPin, LOW);
-  SPI.transfer(WB_WRITE_DISABLE);
-  digitalWrite(_csPin, HIGH);
+  digitalWrite(_csPin,HIGH);
+  _writeDisable();
   _busyWait();
 }
 bool Flash::readBytes(uint32_t logicalAddr, byte *data, byte length)
@@ -249,7 +281,7 @@ bool Flash::writeBytes(uint32_t logicalAddr, byte *data, byte length)
 
 void Flash::_busyWait()
 {
-  digitalWrite(_csPin, HIGH);
+  // digitalWrite(_csPin, HIGH);
   digitalWrite(_csPin, LOW);
   SPI.transfer(WB_READ_STATUS_REG_1);
   while (SPI.transfer(0) & 1) {};
@@ -267,5 +299,23 @@ void Flash::_chipErase()
   }
   digitalWrite(_csPin, HIGH);
   _busyWait();
+}
+void Flash::eraseSector(uint32_t sectorAddr)
+{
+  debugFlash(F("Erasing Sector "));debugFlash(sectorAddr);
+  _writeEnable();
+  uint32_t addr = sectorAddr;
+  uint8_t *ptr = (uint8_t*)&addr;
+  digitalWrite(_csPin,LOW);
+  SPI.transfer(WB_SECTOR_ERASE);
+  SPI.transfer(ptr[2]);
+  SPI.transfer(ptr[1]);
+  SPI.transfer(0);
+  // SPI.transfer16(0x2000 | ((sectorAddr >> 16) & 255));
+  // SPI.transfer16(sectorAddr);
+  digitalWrite(_csPin, HIGH);
+  _writeDisable();
+  _busyWait();
+  debugFlashln(F(" -> Done"));
 }
 
