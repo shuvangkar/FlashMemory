@@ -304,15 +304,25 @@ void Flash::eraseSector(uint32_t sectorAddr)
 {
   debugFlash(F("Erasing Sector "));debugFlash(sectorAddr);
   _writeEnable();
-  uint32_t addr = sectorAddr;
-  uint8_t *ptr = (uint8_t*)&addr;
-  digitalWrite(_csPin,LOW);
-  SPI.transfer(WB_SECTOR_ERASE);
-  SPI.transfer(ptr[2]);
-  SPI.transfer(ptr[1]);
-  SPI.transfer(0);
+  // uint32_t addr = sectorAddr;
+  // uint8_t *ptr = (uint8_t*)&addr;
+  // digitalWrite(_csPin,LOW);
+  // SPI.transfer(WB_SECTOR_ERASE);
+  // SPI.transfer(ptr[2]);
+  // SPI.transfer(ptr[1]);
+  // SPI.transfer(0);
   // SPI.transfer16(0x2000 | ((sectorAddr >> 16) & 255));
   // SPI.transfer16(sectorAddr);
+
+  digitalWrite(_csPin,LOW);
+  SPI.transfer(WB_SECTOR_ERASE);
+  // SPI.transfer(0x52);
+  digitalWrite(_csPin,HIGH);
+  digitalWrite(_csPin,LOW);
+  
+  SPI.transfer(sectorAddr >> 16);
+  SPI.transfer(sectorAddr >> 8);
+  SPI.transfer(sectorAddr);
   digitalWrite(_csPin, HIGH);
   _writeDisable();
   _busyWait();
