@@ -11,15 +11,27 @@
 #define debugFlashln(...)  __VA_ARGS__
 #endif
 /*********flash commands**********/
-#define WB_WRITE_ENABLE       0x06
-#define WB_WRITE_DISABLE      0x04
+#define FLASH_WRITE_ENABLE       0x06
+#define FLASH_WRITE_DISABLE      0x04
+#define FLASH_READ_STATUS_1      0x05
+#define FLASH_READ_STATUS_2      0x35
+#define FLASH_READ_STATUS_3      0x15
+#define FLASH_WRITE_STATUS_1     0x01
+#define FLASH_WRITE_STATUS_2     0x31
+#define FLASH_WRITE_STATUS_3     0x11
+#define FLASH_READ_DATA          0x03
+
 #define WB_CHIP_ERASE         0xc7
 #define WB_SECTOR_ERASE       0x20
 #define WB_READ_STATUS_REG_1  0x05
 #define WB_READ_DATA          0x03
 #define WB_PAGE_PROGRAM       0x02
 #define WB_JEDEC_ID           0x9f
+#define SPIFLASH_STATUSWRITE      0x01        // write status register
 /*********************************/
+
+#define chipEnable() (digitalWrite(_csPin, LOW))
+#define chipDisable() (digitalWrite(_csPin, HIGH))
 
 Flash::Flash(byte chipSelect)
 {
@@ -36,27 +48,87 @@ Flash::Flash(byte CS, uint32_t startAddr, uint16_t packetSz)
 void Flash::begin()
 {
   pinMode(_csPin, OUTPUT);
-  digitalWrite(_csPin, HIGH);
+  chipDisable();
+
   SPI.begin();
   SPI.setDataMode(0);
   SPI.setBitOrder(MSBFIRST);
-}
-void Flash::setFlashSize(byte sizeMbit)
-{
-	_flashSz = sizeMbit;
+  SPI.setClockDivider(SPI_CLOCK_DIV4);
 }
 
 void Flash::_writeEnable()
 {
-  digitalWrite(_csPin, LOW);
-  SPI.transfer(WB_WRITE_ENABLE);
-  digitalWrite(_csPin, HIGH);
+  chipEnable();
+  SPI.transfer(FLASH_WRITE_ENABLE);
+  chipDisable();
 }
 void Flash::_writeDisable()
 {
-  digitalWrite(_csPin, LOW);
-  SPI.transfer(WB_WRITE_DISABLE);
-  digitalWrite(_csPin, HIGH);
+  chipEnable();
+  SPI.transfer(FLASH_WRITE_DISABLE);
+  chipDisable();
+}
+uint8_t Flash::_readStatus(uint8_t regNo)
+{
+  chipEnable();
+  switch(regNo)
+  {
+    case 1:
+      SPI.transfer(FLASH_READ_STATUS_1);
+    break;
+    case 2:
+      SPI.transfer(FLASH_READ_STATUS_2);
+    break;
+    case 3:
+      SPI.transfer(FLASH_READ_STATUS_3);
+    break;
+  }
+  uint8_t reg = SPI.transfer(0);
+  chipDisable();
+  return reg;
+}
+void Flash::_writeStatus(uint8_t regNo,uint8_t reg)
+{
+  _writeEnable();
+  chipEnable();
+  // switch(regNo)
+  // {
+  //   case 1:
+  //   break;
+  //   case 2:
+  //   break;
+  //   case 3:
+  //   break;
+  // }
+}
+
+void Flash::_busyWait()
+{
+  if(_isbusy)
+  {
+    uint8_t reg1;
+    do
+    {
+      reg1 = _readStatus(1);
+      _isbusy = reg1 & 0x01;
+    }while(_isbusy);
+  }
+}
+
+uint8_t *Flash::readPage(uint32_t pageNo, uint8_t *pageBuffer)
+{
+  _busyWait();
+  chipEnable();
+  SPI.transfer(FLASH_READ_DATA);
+  SPI.transfer((uint8_t)(pageNo>>16));
+  SPI.transfer((uint8_t)(pageNo>>8));
+  SPI.transfer((uint8_t)(pageNo));
+
+}
+
+void Flash::setFlashSize(byte sizeMbit)
+{
+  _flashSz = sizeMbit;
 }
 
 void Flash::eraseChipData()
@@ -279,18 +351,18 @@ bool Flash::writeBytes(uint32_t logicalAddr, byte *data, byte length)
 
  }
 
-void Flash::_busyWait()
-{
-  // digitalWrite(_csPin, HIGH);
-  digitalWrite(_csPin, LOW);
-  SPI.transfer(WB_READ_STATUS_REG_1);
-  while (SPI.transfer(0) & 1) {};
-  digitalWrite(_csPin, HIGH);
-}
+// void Flash::_busyWait()
+// {
+//   // digitalWrite(_csPin, HIGH);
+//   digitalWrite(_csPin, LOW);
+//   SPI.transfer(WB_READ_STATUS_REG_1);
+//   while (SPI.transfer(0) & 1) {};
+//   digitalWrite(_csPin, HIGH);
+// }
 
 void Flash::_chipErase()
 {
-  byte instruction[3] = {WB_WRITE_ENABLE,WB_CHIP_ERASE,WB_WRITE_DISABLE};
+  byte instruction[3] = {FLASH_WRITE_ENABLE,WB_CHIP_ERASE,FLASH_WRITE_DISABLE};
   for(byte i = 0; i<3; i++)
   {
     digitalWrite(_csPin, HIGH);

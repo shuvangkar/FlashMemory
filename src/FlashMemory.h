@@ -10,6 +10,8 @@ class Flash
     Flash(byte chipSelect);
     Flash(byte CS, uint32_t startAddr, uint16_t packetSz);
     void begin();
+    uint8_t *readPage(uint32_t pageNo, uint8_t *pageBuffer);
+
     void setFlashSize(byte sizeMbit);
     void printPage(unsigned int pageNum);
     void printPageBytes(byte *pageBuf);
@@ -30,9 +32,12 @@ class Flash
     void _busyWait();
     void _writeEnable();
     void _writeDisable();
-    
+    uint8_t _readStatus(uint8_t regNo);
+    void _writeStatus(uint8_t regNo,uint8_t reg);
+
     void _chipErase();
     void _erasePage(uint16_t pageNum);
+    bool _isbusy = true;
 
     uint32_t _getNextAddr(uint32_t currentAddr);// the function returns next address for similar type of packet,return zero if no memory available
 };
