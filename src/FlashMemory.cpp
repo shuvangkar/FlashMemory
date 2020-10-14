@@ -56,7 +56,7 @@ void Flash::begin()
   SPI.setClockDivider(SPI_CLOCK_DIV4);
   delay(1);
   // _setIndividualSectorLock();
-  // _setGlobalSectorUnlock();
+  _setGlobalSectorUnlock();
   // SPI.transfer(0xFF);
 }
 
@@ -306,12 +306,16 @@ void Flash::eraseSector(uint32_t sectorAddr)
   debugFlash(F("Erasing Sector "));debugFlash(sectorAddr);
   _busyWait();
   _writeEnable();
-  chipEnable();
   Serial.print(F("TP1 : "));Serial.println(_readStatus(1),BIN);
+
+  chipEnable();
   SPI.transfer(WB_SECTOR_ERASE);
+  chipDisable();
+  chipEnable();
   SPI.transfer((uint8_t)sectorAddr >> 16);
   SPI.transfer((uint8_t)sectorAddr >> 8);
   SPI.transfer((uint8_t)sectorAddr);
+  chipDisable();
   Serial.print(F("TP2 : "));Serial.println(_readStatus(1),BIN);
   chipDisable();
   _writeDisable();
