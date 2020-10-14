@@ -23,6 +23,11 @@ class Flash
     void _writePage(unsigned int PageNum, byte *pageBuf);
     void eraseChipData();
     void eraseSector(uint32_t sectorAddr);
+
+    uint8_t _readStatus(uint8_t regNo);
+
+    bool unlockSector(uint32_t sector);
+    uint8_t readSectorLock(uint32_t sectorAddr);
   private:
     byte _csPin;
     uint32_t _startAddr;
@@ -32,7 +37,11 @@ class Flash
     void _busyWait();
     void _writeEnable();
     void _writeDisable();
-    uint8_t _readStatus(uint8_t regNo);
+    bool _getWriteEnableStatus();
+    void _setIndividualSectorLock();
+    void _setGlobalSectorUnlock();
+    void _writeEnableVolatile();
+    
     void _writeStatus(uint8_t regNo,uint8_t reg);
 
     void _chipErase();
