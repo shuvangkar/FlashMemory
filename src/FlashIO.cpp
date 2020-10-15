@@ -7,7 +7,7 @@
 /***********Bit masking*****************/
 #define BUSY_BIT 	0
 #define WEL_BIT 	1
-#define WPS_BIT		2
+
 
 
 
@@ -58,7 +58,7 @@ void Flash::_writeStatusReg(uint8_t regNo,uint8_t reg)
   csLow();
   SPI.transfer(reg);
   csHigh();
-  _writeDisable();
+  // _writeDisable();
 }
 
 bool Flash::_getWriteStatus()
@@ -67,13 +67,17 @@ bool Flash::_getWriteStatus()
   return ((reg1 & (1<<WEL_BIT))>>WEL_BIT);
 }
 
+bool Flash::_getStatus(uint8_t bit)
+{
+	uint8_t reg1 = _readStatusReg(1);
+	return ((reg1 & (1<<bit))>>bit);
+}
 bool  Flash::_writeEnable(uint8_t memType)
 {
 	/*
 	volatile status register will affetct WEL register
 	non-volatile write enable change WEL register. 
 	*/
-	uint8_t status;
 	csLow();
 	switch(memType)
 	{
@@ -116,12 +120,16 @@ void Flash::_busyWait()
 
 void Flash::_spiSendAddr(uint32_t addr)
 {
-	csLow();
+	// csLow();
 	// SPI.transfer16(addr>>8);
-	SPI.transfer((uint8_t)addr>>16);
-	SPI.transfer((uint8_t)addr>8);
-	SPI.transfer((uint8_t)addr);
-	csHigh();
+	uint8_t *ptr = (uint8_t*)&addr;
+	SPI.transfer(ptr[2]);
+    SPI.transfer(ptr[1]);
+    SPI.transfer(ptr[0]);
+	// SPI.transfer((uint8_t)addr>>16);
+	// SPI.transfer((uint8_t)addr>8);
+	// SPI.transfer((uint8_t)addr);
+	// csHigh();
 }
 
 void Flash::_setWriteProtectSchema(schema_t schema)
@@ -150,9 +158,7 @@ void Flash::_setLock(memSize_t memSize, uint32_t bAddress)
 		case SECTOR:
 		case BLOCK:
 			SPI.transfer(BLOCK_SECTOR_LOCK);
-			csHigh();
 			_spiSendAddr(bAddress);
-			return;
 		break;
 		case GLOBAL:
 			SPI.transfer(GLOBAL_BLOCK_SECTOR_LOCK);
@@ -163,16 +169,15 @@ void Flash::_setLock(memSize_t memSize, uint32_t bAddress)
 
 void Flash::_setUnlock(memSize_t memSize, uint32_t bAddress)
 {
-	_writeEnable(VOLATILE);
+	// _writeEnable(VOLATILE);
+	_writeEnable();
 	csLow();
 	switch(memSize)
 	{
 		case SECTOR:
 		case BLOCK:
 			SPI.transfer(BLOCK_SECTOR_UNLOCK);
-			csHigh();
 			_spiSendAddr(bAddress);
-			return;
 		break;
 		case GLOBAL:
 			SPI.transfer(GLOBAL_BLOCK_SECTOR_UNLOCK);
@@ -185,10 +190,8 @@ bool Flash::_readSectorLock(uint32_t addr)
 {
 	csLow();
 	SPI.transfer(READ_BLOCK_SECTOR_LOCK);
-	csHigh();
 	_spiSendAddr(addr);
-	csLow();
 	uint8_t reg = SPI.transfer(0);
 	csHigh();
-	return reg
+	return reg;
 }

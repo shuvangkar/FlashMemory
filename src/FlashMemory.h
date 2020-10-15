@@ -7,6 +7,11 @@
 #define NON_VOLATILE 0
 #define VOLATILE     1
 
+#define BUSY_BIT         0
+#define WRITING_BIT      1
+#define WPS_BIT          2   
+
+
 
 typedef enum memSchema
 {
@@ -44,7 +49,7 @@ class Flash
     byte  *_readPage(unsigned int pageNum, byte *page_buffer);
     void _writePage(unsigned int PageNum, byte *pageBuf);
     void eraseChipData();
-    void eraseSector(uint32_t sectorAddr);
+    void eraseSector(uint32_t addr);
 
 
     uint8_t _readStatusReg(uint8_t regNo);
@@ -61,6 +66,7 @@ class Flash
 
     // uint8_t _readStatusReg(uint8_t regNo);
     bool _getWriteStatus();
+    bool _getStatus(uint8_t bit);
     bool  _writeEnable(uint8_t memType = NON_VOLATILE);
     void  _writeDisable();
     void _writeStatusReg(uint8_t regNo,uint8_t reg);

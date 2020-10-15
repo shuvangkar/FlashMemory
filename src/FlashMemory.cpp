@@ -55,7 +55,8 @@ void Flash::begin()
   SPI.setBitOrder(MSBFIRST);
   SPI.setClockDivider(SPI_CLOCK_DIV4);
   delay(1);
-  _setWriteProtectSchema(INDIVIDUAL_BLOCK);
+  // _setWriteProtectSchema(INDIVIDUAL_BLOCK);
+  _setUnlock(GLOBAL);
 }
 
 
@@ -122,7 +123,7 @@ byte  *Flash::_readPage(unsigned int pageNum, byte *page_buffer)
   byte *buf = page_buffer;
   digitalWrite(_csPin, HIGH);
   digitalWrite(_csPin, LOW);
-  SPI.transfer(WB_READ_DATA);
+  SPI.transfer(FLASH_READ_DATA);
   // Construct the 24-bit address from the 16-bit page
   SPI.transfer((pageNum >> 8) & 0xFF); //Least 8 bits
   SPI.transfer((pageNum >> 0) & 0xFF); //Most 8 bits
@@ -140,10 +141,11 @@ byte  *Flash::_readPage(unsigned int pageNum, byte *page_buffer)
 void Flash::_writePage(unsigned int PageNum, byte *pageBuf)
 {
   _busyWait();
+  // _setUnlock(SECTOR,1);
   _writeEnable();
   csLow();
   uint8_t *p = (uint8_t*)&PageNum;
-  SPI.transfer(WB_PAGE_PROGRAM);
+  SPI.transfer(FLASH_PAGE_PROGRAM);
   SPI.transfer(p[1]);
   SPI.transfer(p[0]);
   SPI.transfer(0);
@@ -160,7 +162,7 @@ void Flash::_chipErase()
 {
   _writeEnable();
   csLow();
-  SPI.transfer(WB_CHIP_ERASE);
+  SPI.transfer(FLASH_CHIP_ERASE);
   csHigh();
   _writeDisable();
   _busyWait();
@@ -168,27 +170,36 @@ void Flash::_chipErase()
 }
 
 
-void Flash::eraseSector(uint32_t sectorAddr)
+void Flash::eraseSector(uint32_t addr)
 {
   // unlockSector(sectorAddr);
-  debugFlash(F("Erasing Sector "));debugFlash(sectorAddr);
+  debugFlash(F("Erasing Sector "));debugFlash(addr);
   _busyWait();
-  _writeEnable();
-  Serial.print(F("TP1 : "));Serial.println(_readStatus(1),BIN);
 
-  csLow();
-  SPI.transfer(WB_SECTOR_ERASE);
-  csHigh();
-  csLow();
-  SPI.transfer((uint8_t)sectorAddr >> 16);
-  SPI.transfer((uint8_t)sectorAddr >> 8);
-  SPI.transfer((uint8_t)sectorAddr);
-  csHigh();
-  Serial.print(F("TP2 : "));Serial.println(_readStatus(1),BIN);
-  csHigh();
-  _writeDisable();
-  Serial.print(F("TP3 : "));Serial.println(_readStatus(1),BIN);
-  debugFlashln(F("Sector Erase Done"));
+  Serial.print(F("\nbStatus 1: "));Serial.println(_readStatusReg(1),BIN);
+  if(_writeEnable())
+  {
+  	Serial.print(F("Status 1: "));Serial.println(_readStatusReg(1),BIN);
+  	// SPI.transfer(FLASH_SECTOR_ERASE);
+  	// csHigh();
+  	// _spiSendAddr(sectorAddr);
+  	csLow();
+  	SPI.transfer(0x52);
+  	uint8_t *ptr = (uint8_t*)&addr;
+    SPI.transfer(ptr[2]);
+    SPI.transfer(ptr[1]);
+    SPI.transfer(ptr[0]);
+    csHigh();
+
+  	uint8_t status;
+  	do
+  	{
+  		Serial.print(F("Status 1: "));Serial.println(_readStatusReg(1),BIN);
+  		status = _getWriteStatus();
+  		Serial.print(F("Erase status : "));Serial.println(status);
+  	}while(status);
+  	debugFlashln(F("Sector Erase Done"));
+  }
 }
 
 bool Flash::readBytes(uint32_t logicalAddr, byte *data, byte length)
