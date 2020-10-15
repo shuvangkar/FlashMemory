@@ -1,6 +1,7 @@
 #include "FlashMemory.h"
 #include <SPI.h>
 #include <SPI.h>
+#include "FlashRegisters.h"
 
 #define FLASH_DEBUG
 #ifdef FLASH_DEBUG
@@ -10,28 +11,27 @@
 #define debugFlash(...)   __VA_ARGS__
 #define debugFlashln(...)  __VA_ARGS__
 #endif
-/*********flash commands**********/
-#define FLASH_WRITE_ENABLE       0x06
-#define FLASH_WRITE_DISABLE      0x04
-#define FLASH_READ_STATUS_1      0x05
-#define FLASH_READ_STATUS_2      0x35
-#define FLASH_READ_STATUS_3      0x15
-#define FLASH_WRITE_STATUS_1     0x01
-#define FLASH_WRITE_STATUS_2     0x31
-#define FLASH_WRITE_STATUS_3     0x11
-#define FLASH_READ_DATA          0x03
 
-#define WB_CHIP_ERASE         0xc7
-#define WB_SECTOR_ERASE       0x20
-#define WB_READ_STATUS_REG_1  0x05
-#define WB_READ_DATA          0x03
-#define WB_PAGE_PROGRAM       0x02
-#define WB_JEDEC_ID           0x9f
-#define SPIFLASH_STATUSWRITE      0x01        // write status register
-/*********************************/
+// /*********flash commands**********/
+// #define FLASH_WRITE_ENABLE       0x06
+// #define FLASH_WRITE_DISABLE      0x04
+// #define FLASH_READ_STATUS_1      0x05
+// #define FLASH_READ_STATUS_2      0x35
+// #define FLASH_READ_STATUS_3      0x15
+// #define FLASH_WRITE_STATUS_1     0x01
+// #define FLASH_WRITE_STATUS_2     0x31
+// #define FLASH_WRITE_STATUS_3     0x11
+// #define FLASH_READ_DATA          0x03
 
-#define chipEnable() (digitalWrite(_csPin, LOW))
-#define chipDisable() (digitalWrite(_csPin, HIGH))
+// #define WB_CHIP_ERASE         0xc7
+// #define WB_SECTOR_ERASE       0x20
+// #define WB_READ_STATUS_REG_1  0x05
+// #define WB_READ_DATA          0x03
+// #define WB_PAGE_PROGRAM       0x02
+// #define WB_JEDEC_ID           0x9f
+// #define SPIFLASH_STATUSWRITE      0x01        // write status register
+// /*********************************/
+
 
 Flash::Flash(byte chipSelect)
 {
@@ -48,118 +48,21 @@ Flash::Flash(byte CS, uint32_t startAddr, uint16_t packetSz)
 void Flash::begin()
 {
   pinMode(_csPin, OUTPUT);
-  chipDisable();
+  csHigh();
 
   SPI.begin();
   SPI.setDataMode(0);
   SPI.setBitOrder(MSBFIRST);
   SPI.setClockDivider(SPI_CLOCK_DIV4);
   delay(1);
-  // _setIndividualSectorLock();
-  _setGlobalSectorUnlock();
-  // SPI.transfer(0xFF);
+  _setWriteProtectSchema(INDIVIDUAL_BLOCK);
 }
 
-void Flash::_writeEnable()
-{
-  chipEnable();
-  SPI.transfer(FLASH_WRITE_ENABLE);
-  chipDisable();
-}
-void Flash::_writeDisable()
-{
-  chipEnable();
-  SPI.transfer(FLASH_WRITE_DISABLE);
-  chipDisable();
-}
-void Flash::_writeEnableVolatile()
-{
-  chipEnable();
-  SPI.transfer(0x50);
-  chipDisable();
-}
-uint8_t Flash::_readStatus(uint8_t regNo)
-{
-  chipEnable();
-  switch(regNo)
-  {
-    case 1:
-      SPI.transfer(FLASH_READ_STATUS_1);
-    break;
-    case 2:
-      SPI.transfer(FLASH_READ_STATUS_2);
-    break;
-    case 3:
-      SPI.transfer(FLASH_READ_STATUS_3);
-    break;
-  }
-  uint8_t reg = SPI.transfer(0);
-  chipDisable();
-  return reg;
-}
-void Flash::_writeStatus(uint8_t regNo,uint8_t reg)
-{
-  _writeEnable();
-  chipEnable();
-  switch(regNo)
-  {
-    case 1:
-      SPI.transfer(FLASH_WRITE_STATUS_1);
-    break;
-    case 2:
-      SPI.transfer(FLASH_WRITE_STATUS_2);
-    break;
-    case 3:
-      SPI.transfer(FLASH_WRITE_STATUS_3);
-    break;
-  }
-  SPI.transfer(reg);
-  chipDisable();
-}
 
-void Flash::_busyWait()
-{
-  // if(_isbusy)
-  // {
-    uint8_t reg1;
-    do
-    {
-      reg1 = _readStatus(1);
-      _isbusy = reg1 & 0x01;
-      // Serial.println(reg1,BIN);
-    }while(_isbusy);
-  // }
-}
-
-bool Flash::_getWriteEnableStatus()
-{
-  uint8_t reg1 = _readStatus(1);
-  if(reg1 & 0b00000010)
-  {
-    return true;
-  }
-  else 
-  {
-    return false;
-  }
-}
-
- void Flash::_setIndividualSectorLock()
- {
-   uint8_t reg = _readStatus(3);
-   _writeStatus(3, reg | 0x04) ; //set WPS = 1;
- }
-void Flash::_setGlobalSectorUnlock()
-{
-  _writeEnable();
-  chipEnable();
-  SPI.transfer(0x98);
-  chipDisable();
-}
 uint8_t *Flash::readPage(uint32_t pageNo, uint8_t *pageBuffer)
 {
   _busyWait();
-  chipEnable();
+  csLow();
   SPI.transfer(FLASH_READ_DATA);
   // SPI.transfer((uint8_t)(pageNo>>16));
   SPI.transfer((uint8_t)(pageNo>>8));
@@ -171,7 +74,7 @@ uint8_t *Flash::readPage(uint32_t pageNo, uint8_t *pageBuffer)
   {
     ptr[i] = SPI.transfer(0);
   }
-  chipDisable();
+  csHigh();
 }
 
 void Flash::setFlashSize(byte sizeMbit)
@@ -238,7 +141,7 @@ void Flash::_writePage(unsigned int PageNum, byte *pageBuf)
 {
   _busyWait();
   _writeEnable();
-  chipEnable();
+  csLow();
   uint8_t *p = (uint8_t*)&PageNum;
   SPI.transfer(WB_PAGE_PROGRAM);
   SPI.transfer(p[1]);
@@ -253,52 +156,17 @@ void Flash::_writePage(unsigned int PageNum, byte *pageBuf)
 }
 
 
-
-
-// void Flash::_busyWait()
-// {
-//   // digitalWrite(_csPin, HIGH);
-//   digitalWrite(_csPin, LOW);
-//   SPI.transfer(WB_READ_STATUS_REG_1);
-//   while (SPI.transfer(0) & 1) {};
-//   digitalWrite(_csPin, HIGH);
-// }
-
 void Flash::_chipErase()
 {
   _writeEnable();
-  chipEnable();
+  csLow();
   SPI.transfer(WB_CHIP_ERASE);
-  chipDisable();
+  csHigh();
   _writeDisable();
   _busyWait();
 
 }
-bool Flash::unlockSector(uint32_t sector)
-{
-  _writeEnable();
-  Serial.print(F("Enable : ")); Serial.println(_getWriteEnableStatus());
-  chipEnable();
-  SPI.transfer(0x39);
-  SPI.transfer((uint8_t)sector>>16);
-  SPI.transfer((uint8_t)sector>>8);
-  SPI.transfer((uint8_t)sector);
-  chipDisable();
-  _busyWait();
-}
-uint8_t Flash::readSectorLock(uint32_t sectorAddr)
-{
-  chipEnable();
-  SPI.transfer(0x3d);
-  SPI.transfer(sectorAddr>>16);
-  SPI.transfer(sectorAddr>>8);
-  SPI.transfer(sectorAddr);
-  uint8_t reg = SPI.transfer(0);
-  chipDisable();
-  _busyWait();
-  return reg;
 
-}
 
 void Flash::eraseSector(uint32_t sectorAddr)
 {
@@ -308,16 +176,16 @@ void Flash::eraseSector(uint32_t sectorAddr)
   _writeEnable();
   Serial.print(F("TP1 : "));Serial.println(_readStatus(1),BIN);
 
-  chipEnable();
+  csLow();
   SPI.transfer(WB_SECTOR_ERASE);
-  chipDisable();
-  chipEnable();
+  csHigh();
+  csLow();
   SPI.transfer((uint8_t)sectorAddr >> 16);
   SPI.transfer((uint8_t)sectorAddr >> 8);
   SPI.transfer((uint8_t)sectorAddr);
-  chipDisable();
+  csHigh();
   Serial.print(F("TP2 : "));Serial.println(_readStatus(1),BIN);
-  chipDisable();
+  csHigh();
   _writeDisable();
   Serial.print(F("TP3 : "));Serial.println(_readStatus(1),BIN);
   debugFlashln(F("Sector Erase Done"));

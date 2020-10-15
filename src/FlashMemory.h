@@ -4,6 +4,28 @@
 
 
 
+#define NON_VOLATILE 0
+#define VOLATILE     1
+
+
+typedef enum memSchema
+{
+    INDIVIDUAL_BLOCK,
+    FIRST_BLOCK,
+    SECOND_BLOCK,
+}schema_t;
+
+typedef enum memSize
+{
+    SECTOR,
+    BLOCK,
+    GLOBAL,
+}memSize_t;
+
+#define csLow() (digitalWrite(_csPin, LOW))
+#define csHigh() (digitalWrite(_csPin, HIGH))
+
+
 class Flash
 {
   public:
@@ -24,29 +46,31 @@ class Flash
     void eraseChipData();
     void eraseSector(uint32_t sectorAddr);
 
-    uint8_t _readStatus(uint8_t regNo);
 
-    bool unlockSector(uint32_t sector);
-    uint8_t readSectorLock(uint32_t sectorAddr);
+    uint8_t _readStatusReg(uint8_t regNo);
+    bool _readSectorLock(uint32_t addr);
+    void _setUnlock(memSize_t memSize, uint32_t bAddress = 0);
   private:
     byte _csPin;
     uint32_t _startAddr;
     uint16_t _packetSz;
     byte _flashSz = 0;;
-    // byte *_buf;
-    void _busyWait();
-    void _writeEnable();
-    void _writeDisable();
-    bool _getWriteEnableStatus();
-    void _setIndividualSectorLock();
-    void _setGlobalSectorUnlock();
-    void _writeEnableVolatile();
-    
-    void _writeStatus(uint8_t regNo,uint8_t reg);
 
     void _chipErase();
-    void _erasePage(uint16_t pageNum);
     bool _isbusy = true;
+
+    // uint8_t _readStatusReg(uint8_t regNo);
+    bool _getWriteStatus();
+    bool  _writeEnable(uint8_t memType = NON_VOLATILE);
+    void  _writeDisable();
+    void _writeStatusReg(uint8_t regNo,uint8_t reg);
+    void _busyWait();
+
+    void _spiSendAddr(uint32_t addr);
+    void _setWriteProtectSchema(schema_t schema);
+    void _setLock(memSize_t memSize, uint32_t bAddress = 0);
+    // void _setUnlock(memSize_t memSize, uint32_t bAddress = 0);
+    // bool _readSectorLock(uint32_t addr);
 
     uint32_t _getNextAddr(uint32_t currentAddr);// the function returns next address for similar type of packet,return zero if no memory available
 };
