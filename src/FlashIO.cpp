@@ -120,16 +120,10 @@ void Flash::_busyWait()
 
 void Flash::_spiSendAddr(uint32_t addr)
 {
-	// csLow();
-	// SPI.transfer16(addr>>8);
 	uint8_t *ptr = (uint8_t*)&addr;
 	SPI.transfer(ptr[2]);
     SPI.transfer(ptr[1]);
     SPI.transfer(ptr[0]);
-	// SPI.transfer((uint8_t)addr>>16);
-	// SPI.transfer((uint8_t)addr>8);
-	// SPI.transfer((uint8_t)addr);
-	// csHigh();
 }
 
 void Flash::_setWriteProtectSchema(schema_t schema)
@@ -169,8 +163,8 @@ void Flash::_setLock(memSize_t memSize, uint32_t bAddress)
 
 void Flash::_setUnlock(memSize_t memSize, uint32_t bAddress)
 {
-	// _writeEnable(VOLATILE);
-	_writeEnable();
+	_writeEnable(VOLATILE);
+	// _writeEnable();
 	csLow();
 	switch(memSize)
 	{

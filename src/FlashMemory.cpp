@@ -12,25 +12,6 @@
 #define debugFlashln(...)  __VA_ARGS__
 #endif
 
-// /*********flash commands**********/
-// #define FLASH_WRITE_ENABLE       0x06
-// #define FLASH_WRITE_DISABLE      0x04
-// #define FLASH_READ_STATUS_1      0x05
-// #define FLASH_READ_STATUS_2      0x35
-// #define FLASH_READ_STATUS_3      0x15
-// #define FLASH_WRITE_STATUS_1     0x01
-// #define FLASH_WRITE_STATUS_2     0x31
-// #define FLASH_WRITE_STATUS_3     0x11
-// #define FLASH_READ_DATA          0x03
-
-// #define WB_CHIP_ERASE         0xc7
-// #define WB_SECTOR_ERASE       0x20
-// #define WB_READ_STATUS_REG_1  0x05
-// #define WB_READ_DATA          0x03
-// #define WB_PAGE_PROGRAM       0x02
-// #define WB_JEDEC_ID           0x9f
-// #define SPIFLASH_STATUSWRITE      0x01        // write status register
-// /*********************************/
 
 
 Flash::Flash(byte chipSelect)
@@ -38,6 +19,7 @@ Flash::Flash(byte chipSelect)
   _csPin = chipSelect;
   
 }
+
 Flash::Flash(byte CS, uint32_t startAddr, uint16_t packetSz)
 {
 	_csPin = CS;
@@ -55,8 +37,8 @@ void Flash::begin()
   SPI.setBitOrder(MSBFIRST);
   SPI.setClockDivider(SPI_CLOCK_DIV4);
   delay(1);
-  // _setWriteProtectSchema(INDIVIDUAL_BLOCK);
-  _setUnlock(GLOBAL);
+  _setWriteProtectSchema(INDIVIDUAL_BLOCK);
+  // _setUnlock(GLOBAL);
 }
 
 
@@ -179,16 +161,12 @@ void Flash::eraseSector(uint32_t addr)
   Serial.print(F("\nbStatus 1: "));Serial.println(_readStatusReg(1),BIN);
   if(_writeEnable())
   {
+  	// _setUnlock(SECTOR,addr);
+  	// _setUnlock(GLOBAL);
   	Serial.print(F("Status 1: "));Serial.println(_readStatusReg(1),BIN);
-  	// SPI.transfer(FLASH_SECTOR_ERASE);
-  	// csHigh();
-  	// _spiSendAddr(sectorAddr);
   	csLow();
-  	SPI.transfer(0x52);
-  	uint8_t *ptr = (uint8_t*)&addr;
-    SPI.transfer(ptr[2]);
-    SPI.transfer(ptr[1]);
-    SPI.transfer(ptr[0]);
+  	SPI.transfer(FLASH_SECTOR_ERASE);
+  	_spiSendAddr(addr);
     csHigh();
 
   	uint8_t status;
@@ -198,6 +176,7 @@ void Flash::eraseSector(uint32_t addr)
   		status = _getWriteStatus();
   		Serial.print(F("Erase status : "));Serial.println(status);
   	}while(status);
+  	// _setLock(SECTOR,addr);
   	debugFlashln(F("Sector Erase Done"));
   }
 }
