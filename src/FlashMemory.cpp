@@ -37,10 +37,53 @@ void Flash::begin()
   SPI.setBitOrder(MSBFIRST);
   SPI.setClockDivider(SPI_CLOCK_DIV4);
   delay(1);
+
+  uint8_t reg = _readStatusReg(1);
+  _writeStatusReg(1,reg |(1<<6)); //protect 4k sector
   _setWriteProtectSchema(INDIVIDUAL_BLOCK);
   // _setUnlock(GLOBAL);
 }
 
+void Flash::read(uint32_t addr, uint8_t *buf, uint16_t len)
+{
+	uint8_t *ptr = addr;
+	_busyWait();
+	csLow();
+	SPI.transfer(FLASH_READ_DATA);
+	_spiSendAddr(addr);
+	for (uint16_t i = 0; i < len; i++)
+	{
+		ptr[i] = SPI.transfer(0);
+	}
+	csHigh();
+}
+void Flash::write(uint32_t addr, uint8_t *buf, uint6_t len)
+{
+	uint16_t N;
+	uint16_t pageByte = 256 - (addr % 256);
+	uint16_t offset = 0;
+	while(len > 0)
+	{
+		N = (len <= pageByte) ? len : pageByte;
+		_busyWait();
+		_writeEnable();
+		csLow();
+		SPI.transfer(FLASH_PAGE_PROGRAM);
+		_spiSendAddr(addr);
+		for( uint16_t i = 0; i < N ; i++)
+		{
+			SPI.transfer(buf(i + offset));
+		}
+		csHigh();
+
+		addr += N;
+		offset += N;
+		len -= N;
+		pageByte = 256;
+	}
+
+
+}
 
 uint8_t *Flash::readPage(uint32_t pageNo, uint8_t *pageBuffer)
 {
@@ -58,6 +101,20 @@ uint8_t *Flash::readPage(uint32_t pageNo, uint8_t *pageBuffer)
     ptr[i] = SPI.transfer(0);
   }
   csHigh();
+}
+void Flash::writePage(uint32_t addr, uint8_t *data)
+{
+	_busyWait();
+	_writeEnable();
+	csLow();
+	SPI.transfer(FLASH_PAGE_PROGRAM);
+	_spiSendAddr(addr);
+	for(int i = 0; i<256; i++)
+	{
+		SPI.transfer(data[i]);
+	}
+	csHigh();
+	_writeDisable();
 }
 
 void Flash::setFlashSize(byte sizeMbit)

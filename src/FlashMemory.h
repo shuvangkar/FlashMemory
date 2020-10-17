@@ -37,7 +37,10 @@ class Flash
     Flash(byte chipSelect);
     Flash(byte CS, uint32_t startAddr, uint16_t packetSz);
     void begin();
+    void read(uint32_t addr, uint8_t *buf, uint16_t len);
+    void write(uint32_t addr, uint8_t *buf, uint6_t len);
     uint8_t *readPage(uint32_t pageNo, uint8_t *pageBuffer);
+    void writePage(uint32_t addr, uint8_t *data);
 
     void setFlashSize(byte sizeMbit);
     void printPage(unsigned int pageNum);
@@ -69,7 +72,7 @@ class Flash
     bool _getStatus(uint8_t bit);
     bool  _writeEnable(uint8_t memType = NON_VOLATILE);
     void  _writeDisable();
-    void _writeStatusReg(uint8_t regNo,uint8_t reg);
+    void _writeStatusReg(uint8_t reg,uint8_t value, uint8_t memType = NON_VOLATILE);
     void _busyWait();
 
     void _spiSendAddr(uint32_t addr);
