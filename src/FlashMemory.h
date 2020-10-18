@@ -41,17 +41,19 @@ class Flash
     void write(uint32_t addr, uint8_t *buf, uint16_t len);
     uint8_t *readPage(uint32_t pageAddr, uint8_t *buf);
     void writePage(uint32_t pageAddr, uint8_t *data);
+    void dumpPage(uint32_t pageAddr, uint8_t *buf);
 
-
+    
     void setFlashSize(byte sizeMbit);
-    void printPage(unsigned int pageNum);
     void printPageBytes(byte *pageBuf);
     void printBytes(byte *buf, byte len);
-    bool writeBytes(uint32_t logicalAddr, byte *data, byte length);
-    bool readBytes(uint32_t logicalAddr, byte *data, byte length);
+    // void printPage(unsigned int pageNum);
     
-    byte  *_readPage(unsigned int pageNum, byte *page_buffer);
-    void _writePage(unsigned int PageNum, byte *pageBuf);
+    // bool writeBytes(uint32_t logicalAddr, byte *data, byte length);
+    // bool readBytes(uint32_t logicalAddr, byte *data, byte length);
+    
+    // byte  *_readPage(unsigned int pageNum, byte *page_buffer);
+    // void _writePage(unsigned int PageNum, byte *pageBuf);
     void eraseChipData();
     void eraseSector(uint32_t addr);
 
@@ -69,6 +71,10 @@ class Flash
     bool _isbusy = true;
 
     // uint8_t _readStatusReg(uint8_t regNo);
+    void  _softReset();
+    void _powerDown();
+    void _releasePowerDown();
+
     bool _getWriteStatus();
     bool _getStatus(uint8_t bit);
     bool  _writeEnable(uint8_t memType = NON_VOLATILE);

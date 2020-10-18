@@ -9,12 +9,10 @@
 #define WEL_BIT 	1
 
 
+void  Flash::_softReset()
+{
 
-
-
-
-// #define csLow() (digitalWrite(_csPin, LOW))
-// #define csHigh() (digitalWrite(_csPin, HIGH))
+}
 
 uint8_t Flash::_readStatusReg(uint8_t regNo)
 {
@@ -38,6 +36,7 @@ uint8_t Flash::_readStatusReg(uint8_t regNo)
 
 void Flash::_writeStatusReg(uint8_t reg,uint8_t value, uint8_t memType)
 {
+  _busyWait();
   _writeEnable(memType);
   csLow();
   switch(reg)
@@ -54,7 +53,7 @@ void Flash::_writeStatusReg(uint8_t reg,uint8_t value, uint8_t memType)
   }
   SPI.transfer(value);
   csHigh();
-  // _writeDisable();
+  _writeDisable();
 }
 
 bool Flash::_getWriteStatus()
@@ -116,21 +115,10 @@ void Flash::_busyWait()
 
 void Flash::_spiSendAddr(uint32_t addr)
 {
-	// Serial.println(F("32 bit addres : "));
 	uint8_t *ptr = (uint8_t*)&addr;
-	SPI.transfer(ptr[2]);
-	// Serial.println(ptr[2]);
-	
+	SPI.transfer(ptr[2]);	
     SPI.transfer(ptr[1]);
-    // Serial.println(ptr[1]);
-
     SPI.transfer(ptr[0]);
-    // Serial.println(ptr[0]);
-
-	// SPI.transfer((uint8_t)((addr >> 16) & 0xFF));
-	// SPI.transfer((uint8_t)((addr >> 8) & 0xFF));
-	// SPI.transfer((uint8_t)((addr >> 0) & 0xFF));
-	// SPI.transfer(0);
 }
 
 void Flash::_setWriteProtectSchema(schema_t schema)
