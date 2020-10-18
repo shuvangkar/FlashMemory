@@ -36,7 +36,7 @@ uint8_t Flash::_readStatusReg(uint8_t regNo)
   return reg;
 }
 
-void Flash::_writeStatusReg(uint8_t reg,uint8_t value, uint8_t memType);
+void Flash::_writeStatusReg(uint8_t reg,uint8_t value, uint8_t memType)
 {
   _writeEnable(memType);
   csLow();

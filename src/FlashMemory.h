@@ -38,9 +38,10 @@ class Flash
     Flash(byte CS, uint32_t startAddr, uint16_t packetSz);
     void begin();
     void read(uint32_t addr, uint8_t *buf, uint16_t len);
-    void write(uint32_t addr, uint8_t *buf, uint6_t len);
-    uint8_t *readPage(uint32_t pageNo, uint8_t *pageBuffer);
-    void writePage(uint32_t addr, uint8_t *data);
+    void write(uint32_t addr, uint8_t *buf, uint16_t len);
+    uint8_t *readPage(uint32_t pageAddr, uint8_t *buf);
+    void writePage(uint32_t pageAddr, uint8_t *data);
+
 
     void setFlashSize(byte sizeMbit);
     void printPage(unsigned int pageNum);

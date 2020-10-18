@@ -38,10 +38,10 @@ void Flash::begin()
   SPI.setClockDivider(SPI_CLOCK_DIV4);
   delay(1);
 
-  uint8_t reg = _readStatusReg(1);
-  _writeStatusReg(1,reg |(1<<6)); //protect 4k sector
-  _setWriteProtectSchema(INDIVIDUAL_BLOCK);
-  // _setUnlock(GLOBAL);
+  // uint8_t reg = _readStatusReg(1);
+  // _writeStatusReg(1,reg |(1<<6)); //protect 4k sector
+  // _setWriteProtectSchema(INDIVIDUAL_BLOCK);
+  // // _setUnlock(GLOBAL);
 }
 
 void Flash::read(uint32_t addr, uint8_t *buf, uint16_t len)
@@ -57,14 +57,15 @@ void Flash::read(uint32_t addr, uint8_t *buf, uint16_t len)
 	}
 	csHigh();
 }
-void Flash::write(uint32_t addr, uint8_t *buf, uint6_t len)
+void Flash::write(uint32_t addr, uint8_t *buf, uint16_t len)
 {
+	uint8_t *ptr = buf;
 	uint16_t N;
-	uint16_t pageByte = 256 - (addr % 256);
+	uint16_t pageRem = 256 - (addr % 256);
 	uint16_t offset = 0;
 	while(len > 0)
 	{
-		N = (len <= pageByte) ? len : pageByte;
+		N = (len <= pageRem) ? len : pageRem;
 		_busyWait();
 		_writeEnable();
 		csLow();
@@ -72,49 +73,42 @@ void Flash::write(uint32_t addr, uint8_t *buf, uint6_t len)
 		_spiSendAddr(addr);
 		for( uint16_t i = 0; i < N ; i++)
 		{
-			SPI.transfer(buf(i + offset));
+			SPI.transfer(ptr[i + offset]);
 		}
 		csHigh();
-
 		addr += N;
 		offset += N;
 		len -= N;
-		pageByte = 256;
+		pageRem = 256;
 	}
-
-
 }
 
-uint8_t *Flash::readPage(uint32_t pageNo, uint8_t *pageBuffer)
+uint8_t *Flash::readPage(uint32_t pageAddr, uint8_t *buf)
 {
-  _busyWait();
-  csLow();
-  SPI.transfer(FLASH_READ_DATA);
-  // SPI.transfer((uint8_t)(pageNo>>16));
-  SPI.transfer((uint8_t)(pageNo>>8));
-  SPI.transfer((uint8_t)(pageNo));
-  SPI.transfer(0);
+	Serial.print(F("Read Page : "));Serial.println(pageAddr);
+	uint32_t addr = pageAddr<<8;
+	read(addr, buf, 256);
 
-  uint8_t *ptr = pageBuffer;
-  for(int i = 0; i < 256; i++)
-  {
-    ptr[i] = SPI.transfer(0);
-  }
-  csHigh();
+  // _busyWait();
+  // csLow();
+  // SPI.transfer(FLASH_READ_DATA);
+  // // SPI.transfer((uint8_t)(pageNo>>16));
+  // SPI.transfer((uint8_t)(pageNo>>8));
+  // SPI.transfer((uint8_t)(pageNo));
+  // SPI.transfer(0);
+
+  // uint8_t *ptr = pageBuffer;
+  // for(int i = 0; i < 256; i++)
+  // {
+  //   ptr[i] = SPI.transfer(0);
+  // }
+  // csHigh();
 }
-void Flash::writePage(uint32_t addr, uint8_t *data)
+void Flash::writePage(uint32_t pageAddr, uint8_t *data)
 {
-	_busyWait();
-	_writeEnable();
-	csLow();
-	SPI.transfer(FLASH_PAGE_PROGRAM);
-	_spiSendAddr(addr);
-	for(int i = 0; i<256; i++)
-	{
-		SPI.transfer(data[i]);
-	}
-	csHigh();
-	_writeDisable();
+	Serial.print(F("Write Page : "));Serial.println(pageAddr);
+	uint32_t addr = pageAddr << 8 ;
+	write(addr,data,256);
 }
 
 void Flash::setFlashSize(byte sizeMbit)
