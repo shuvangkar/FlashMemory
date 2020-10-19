@@ -11,8 +11,6 @@
 #define WRITING_BIT      1
 #define WPS_BIT          2   
 
-
-
 typedef enum memSchema
 {
     INDIVIDUAL_BLOCK,
@@ -30,63 +28,47 @@ typedef enum memSize
 #define csLow() (digitalWrite(_csPin, LOW))
 #define csHigh() (digitalWrite(_csPin, HIGH))
 
-
 class Flash
 {
   public:
     Flash(byte chipSelect);
-    Flash(byte CS, uint32_t startAddr, uint16_t packetSz);
     void begin();
     void read(uint32_t addr, uint8_t *buf, uint16_t len);
     void write(uint32_t addr, uint8_t *buf, uint16_t len);
     uint8_t *readPage(uint32_t pageAddr, uint8_t *buf);
     void writePage(uint32_t pageAddr, uint8_t *data);
-    void dumpPage(uint32_t pageAddr, uint8_t *buf);
 
-    
-    void setFlashSize(byte sizeMbit);
+
     void printPageBytes(byte *pageBuf);
     void printBytes(byte *buf, byte len);
-    // void printPage(unsigned int pageNum);
+    void dumpPage(uint32_t pageAddr, uint8_t *buf);
     
-    // bool writeBytes(uint32_t logicalAddr, byte *data, byte length);
-    // bool readBytes(uint32_t logicalAddr, byte *data, byte length);
-    
-    // byte  *_readPage(unsigned int pageNum, byte *page_buffer);
-    // void _writePage(unsigned int PageNum, byte *pageBuf);
-    void eraseChipData();
+    void eraseChip();
     void eraseSector(uint32_t addr);
-
-
-    uint8_t _readStatusReg(uint8_t regNo);
-    bool _readSectorLock(uint32_t addr);
-    void _setUnlock(memSize_t memSize, uint32_t bAddress = 0);
+    
   private:
     byte _csPin;
-    uint32_t _startAddr;
-    uint16_t _packetSz;
-    byte _flashSz = 0;;
 
-    void _chipErase();
-    bool _isbusy = true;
-
-    // uint8_t _readStatusReg(uint8_t regNo);
     void  _softReset();
     void _powerDown();
     void _releasePowerDown();
 
-    bool _getWriteStatus();
-    bool _getStatus(uint8_t bit);
+   
     bool  _writeEnable(uint8_t memType = NON_VOLATILE);
     void  _writeDisable();
+
     void _writeStatusReg(uint8_t reg,uint8_t value, uint8_t memType = NON_VOLATILE);
+    uint8_t _readStatusReg(uint8_t regNo);
+
+     bool _getStatus(uint8_t bit);
     void _busyWait();
 
     void _spiSendAddr(uint32_t addr);
+
     void _setWriteProtectSchema(schema_t schema);
     void _setLock(memSize_t memSize, uint32_t bAddress = 0);
-    // void _setUnlock(memSize_t memSize, uint32_t bAddress = 0);
-    // bool _readSectorLock(uint32_t addr);
+    void _setUnlock(memSize_t memSize, uint32_t bAddress = 0);
+    bool _readSectorLock(uint32_t addr);
 
     uint32_t _getNextAddr(uint32_t currentAddr);// the function returns next address for similar type of packet,return zero if no memory available
 };

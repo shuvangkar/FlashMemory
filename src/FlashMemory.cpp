@@ -13,17 +13,9 @@
 #endif
 
 
-
 Flash::Flash(byte chipSelect)
 {
   _csPin = chipSelect;  
-}
-
-Flash::Flash(byte CS, uint32_t startAddr, uint16_t packetSz)
-{
-	_csPin = CS;
-  _startAddr = startAddr;
-  _packetSz = packetSz;
 }
 
 void Flash::begin()
@@ -38,7 +30,7 @@ void Flash::begin()
   delay(1);
 
   _writeStatusReg(1,0x00);
-  _writeStatusReg(2,0x00);
+  // _writeStatusReg(2,0x00);
   // _writeStatusReg(3,0x00);
 
   // _writeStatusReg(1,0b01000000);
@@ -109,6 +101,7 @@ uint8_t *Flash::readPage(uint32_t pageAddr, uint8_t *buf)
 	uint32_t addr = pageAddr<<8;
 	read(addr, buf, 256);
 }
+
 void Flash::writePage(uint32_t pageAddr, uint8_t *data)
 {
 	Serial.print(F("Write Page : "));Serial.println(pageAddr);
@@ -135,18 +128,6 @@ void Flash::dumpPage(uint32_t pageAddr, uint8_t *buf)
 	printPageBytes(buf);
 }
 
-void Flash::setFlashSize(byte sizeMbit)
-{
-  _flashSz = sizeMbit;
-}
-
-void Flash::eraseChipData()
-{
-  debugFlashln(F("Erasing Chip.."));
-  _chipErase();
-  debugFlashln(F("Done"));
-}
-
 
 void Flash::printBytes(byte *buf, byte len)
 {
@@ -158,14 +139,16 @@ void Flash::printBytes(byte *buf, byte len)
 }
 
 
-void Flash::_chipErase()
+void Flash::eraseChip()
 {
+  debugFlashln(F("Erasing Chip.."));
   _writeEnable();
   csLow();
   SPI.transfer(FLASH_CHIP_ERASE);
   csHigh();
   _writeDisable();
   _busyWait();
+  debugFlashln(F("Done"));
 }
 
 
@@ -191,7 +174,7 @@ void Flash::eraseSector(uint32_t addr)
   	do
   	{
   		Serial.print(F("Status 1: "));Serial.println(_readStatusReg(1),BIN);
-  		status = _getWriteStatus();
+  		status = _getStatus(WRITING_BIT);
   		Serial.print(F("Erase status : "));Serial.println(status);
   	}while(status);
   	// _setLock(SECTOR,addr);
@@ -199,185 +182,3 @@ void Flash::eraseSector(uint32_t addr)
   }
 }
 
-
-
-
-// void Flash::printPage(unsigned int pageNum)
-// {
-//   debugFlash(F("Page Read: ")); debugFlashln(pageNum);
-//   byte pageBuf[256];
-//   // _readPage(pageNum, pageBuf);
-//   readPage(pageNum,pageBuf);
-//   printPageBytes(pageBuf);
-// }
-
-
-// bool Flash::readBytes(uint32_t logicalAddr, byte *data, byte length)
-// {
-//   uint16_t page = logicalAddr / 256;
-//   uint8_t offset = logicalAddr % 256;
-
-//   byte lenPage[2] = {0};
-//   lenPage[0] = length;
-//   int lastOffset = offset + length;
-//   if (lastOffset > 255)
-//   {
-//     lenPage[0] = 256 - offset;
-//     lenPage[1] = length - lenPage[0];
-//   }
-//   debugFlash(F("Reading(page, offset): "));
-//   debugFlash(page); debugFlash(" "); debugFlashln(offset);
-
-//   byte pageDataBuf[256];
-//   byte lastIndex = 0;
-//   for (byte nxtPage = 0; nxtPage < 2; nxtPage++)
-//   {
-//     int currentPage = page + nxtPage;
-//     _readPage(currentPage, pageDataBuf);
-//     debugFlash(F("----Read Page : ")); debugFlashln(currentPage);
-// #ifdef FLASH_DEBUG
-//     printPageBytes(pageDataBuf);
-// #endif
-//     byte j;
-//     for ( j = 0; j < lenPage[nxtPage]; j++)
-//     {
-//       data[j + lastIndex] =  pageDataBuf[offset + j];
-//     }
-//     //_writePage(currentPage, pageDataBuf); //Writing data into flash
-//     //debugFlash(F("----Write Page : ")); debugFlashln(currentPage);
-//     //printPageBytes(pageDataBuf);
-
-//     if (lenPage[1] > 0)
-//     {
-//       offset = 0;
-//       lastIndex = j;
-//     }
-//     else
-//     {
-//       break;
-//     }
-//   }
-//   printBytes(data, length);
-// }
-
-// bool Flash::writeBytes(uint32_t logicalAddr, byte *data, byte length)
-// {
-//   uint16_t page = logicalAddr / 256;
-//   uint8_t offset = logicalAddr % 256;
-
-//   byte lenPage[2] = {0};
-//   lenPage[0] = length;
-//   int lastOffset = offset + length;
-//   if (lastOffset > 255)
-//   {
-//     lenPage[0] = 256 - offset;
-//     lenPage[1] = length - lenPage[0];
-//   }
-//   debugFlash(F("Writing(page, offset): "));
-//   debugFlash(page); debugFlash(" "); debugFlashln(offset);
-
-//   byte pageDataBuf[256];
-//   byte lastIndex = 0;
-//   for (byte nxtPage = 0; nxtPage < 2; nxtPage++)
-//   {
-//     int currentPage = page + nxtPage;
-//     _readPage(currentPage, pageDataBuf);
-//     debugFlash(F("----Read Page : ")); debugFlashln(currentPage);
-// #ifdef FLASH_DEBUG
-//     printPageBytes(pageDataBuf);
-// #endif
-//     byte j;
-//     for ( j = 0; j < lenPage[nxtPage]; j++)
-//     {
-//       pageDataBuf[offset + j] = data[j + lastIndex];
-//     }
-//     _writePage(currentPage, pageDataBuf); //Writing data into flash
-//     debugFlash(F("----Write Page : ")); debugFlashln(currentPage);
-// #ifdef FLASH_DEBUG
-//     printPageBytes(pageDataBuf);
-// #endif
-
-//     if (lenPage[1] > 0)
-//     {
-//       offset = 0;
-//       lastIndex = j;
-//     }
-//     else
-//     {
-//       break;
-//     }
-//   }
-// }
-
-//  uint32_t Flash::_getNextAddr(uint32_t currentAddr)
-//  {
-//   uint32_t nxtAddr = currentAddr + _packetSz;
-//   //verify that next generated address is the multiple of packetSz
-//   uint16_t mod = (nxtAddr - _startAddr) % _packetSz;//if mod = 0. valid next address
-//   if( mod != 0 )
-//   {
-//     //find next valid address, start from current address
-//     nxtAddr = currentAddr;
-//     do
-//     {
-//       nxtAddr++;
-//       mod = (nxtAddr - _startAddr) % _packetSz;
-//       if(nxtAddr > (currentAddr + 2*_packetSz))
-//       {
-//         break;
-//       }
-//     }while(mod);
-
-//   }
-//   //Check memory availability
-//   if(_flashSz !=0)
-//   {
-//     uint32_t maxSize = (_flashSz * 1000000UL)/8;
-//     if((nxtAddr+_packetSz)>maxSize)
-//     {
-//       return 0;
-//     }
-//   }
-//   return nxtAddr;
-
-//  }
-
-//  void Flash::_writePage(unsigned int PageNum, byte *pageBuf)
-// {
-//   _busyWait();
-//   // _setUnlock(SECTOR,1);
-//   _writeEnable();
-//   csLow();
-//   uint8_t *p = (uint8_t*)&PageNum;
-//   SPI.transfer(FLASH_PAGE_PROGRAM);
-//   SPI.transfer(p[1]);
-//   SPI.transfer(p[0]);
-//   SPI.transfer(0);
-//   for (int i = 0; i < 256; ++i) 
-//   {
-//     SPI.transfer(pageBuf[i]);
-//   }
-//   digitalWrite(_csPin,HIGH);
-//   _writeDisable();
-// }
-
-//  byte  *Flash::_readPage(unsigned int pageNum, byte *page_buffer)
-// {
-//   byte *buf = page_buffer;
-//   digitalWrite(_csPin, HIGH);
-//   digitalWrite(_csPin, LOW);
-//   SPI.transfer(FLASH_READ_DATA);
-//   // Construct the 24-bit address from the 16-bit page
-//   SPI.transfer((pageNum >> 8) & 0xFF); //Least 8 bits
-//   SPI.transfer((pageNum >> 0) & 0xFF); //Most 8 bits
-//   SPI.transfer(0);					    //MSB of 24 bit address
-
-//   for (int i = 0; i < 256; ++i) {
-//     buf[i] = SPI.transfer(0);
-//   }
-//   digitalWrite(_csPin, HIGH);
-//   _busyWait();
-
-//   return page_buffer;
-
-// }
