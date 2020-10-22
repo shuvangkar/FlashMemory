@@ -1,5 +1,6 @@
 #ifndef _H_FLAH_MEM_
 #define _H_FLAH_MEM_
+
 #include <Arduino.h>
 #include <SPI.h>
 
