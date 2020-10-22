@@ -30,7 +30,7 @@ void Flash::begin()
   delay(1);
 
   _writeStatusReg(1,0x00);
-  // _writeStatusReg(2,0x00);
+  _writeStatusReg(2,0x00);
   // _writeStatusReg(3,0x00);
 
   // _writeStatusReg(1,0b01000000);
