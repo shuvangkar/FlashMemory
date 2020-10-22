@@ -18,7 +18,7 @@ Flash::Flash(uint8_t cs)
   _csPin = cs;  
 }
 
-Flash::Flash(uint8_t mosi, uint8_t miso, uint8_t sck, uint8_t cs)
+Flash::Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs);
 {
 #if defined(ARDUINO_ARCH_STM32)
   mySPI.setMOSI(mosi);
