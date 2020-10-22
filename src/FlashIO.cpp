@@ -1,7 +1,5 @@
 #include "FlashMemory.h"
-#include <SPI.h>
 #include "FlashRegisters.h"
-
 
 uint8_t Flash::_readStatusReg(uint8_t regNo)
 {
@@ -9,16 +7,16 @@ uint8_t Flash::_readStatusReg(uint8_t regNo)
   switch(regNo)
   {
     case 1:
-      SPI.transfer(FLASH_READ_STATUS_1);
+      mySPI.transfer(FLASH_READ_STATUS_1);
     break;
     case 2:
-      SPI.transfer(FLASH_READ_STATUS_2);
+      mySPI.transfer(FLASH_READ_STATUS_2);
     break;
     case 3:
-      SPI.transfer(FLASH_READ_STATUS_3);
+      mySPI.transfer(FLASH_READ_STATUS_3);
     break;
   }
-  uint8_t reg = SPI.transfer(0);
+  uint8_t reg = mySPI.transfer(0);
   csHigh();
   return reg;
 }
@@ -31,16 +29,16 @@ void Flash::_writeStatusReg(uint8_t reg,uint8_t value, uint8_t memType)
   switch(reg)
   {
     case 1:
-      SPI.transfer(FLASH_WRITE_STATUS_1);
+      mySPI.transfer(FLASH_WRITE_STATUS_1);
     break;
     case 2:
-      SPI.transfer(FLASH_WRITE_STATUS_2);
+      mySPI.transfer(FLASH_WRITE_STATUS_2);
     break;
     case 3:
-      SPI.transfer(FLASH_WRITE_STATUS_3);
+      mySPI.transfer(FLASH_WRITE_STATUS_3);
     break;
   }
-  SPI.transfer(value);
+  mySPI.transfer(value);
   csHigh();
   _writeDisable();
 }
@@ -61,10 +59,10 @@ bool  Flash::_writeEnable(uint8_t memType)
 	switch(memType)
 	{
 		case NON_VOLATILE:
-			SPI.transfer(FLASH_WRITE_ENABLE);
+			mySPI.transfer(FLASH_WRITE_ENABLE);
 		break;
 		case VOLATILE:
-			SPI.transfer(FLASH_WR_ENA_VOLATILE);
+			mySPI.transfer(FLASH_WR_ENA_VOLATILE);
 		break;
 	}
 	csHigh();
@@ -79,7 +77,7 @@ bool  Flash::_writeEnable(uint8_t memType)
 void Flash::_writeDisable()
 {
   csLow();
-  SPI.transfer(FLASH_WRITE_DISABLE);
+  mySPI.transfer(FLASH_WRITE_DISABLE);
   csHigh();
 }
 
@@ -96,9 +94,9 @@ void Flash::_busyWait()
 void Flash::_spiSendAddr(uint32_t addr)
 {
 	uint8_t *ptr = (uint8_t*)&addr;
-	SPI.transfer(ptr[2]);	
-    SPI.transfer(ptr[1]);
-    SPI.transfer(ptr[0]);
+	mySPI.transfer(ptr[2]);	
+    mySPI.transfer(ptr[1]);
+    mySPI.transfer(ptr[0]);
 }
 
 
@@ -127,11 +125,11 @@ void Flash::_setLock(memSize_t memSize, uint32_t bAddress)
 	{
 		case SECTOR:
 		case BLOCK:
-			SPI.transfer(BLOCK_SECTOR_LOCK);
+			mySPI.transfer(BLOCK_SECTOR_LOCK);
 			_spiSendAddr(bAddress);
 		break;
 		case GLOBAL:
-			SPI.transfer(GLOBAL_BLOCK_SECTOR_LOCK);
+			mySPI.transfer(GLOBAL_BLOCK_SECTOR_LOCK);
 		break;
 	}
 	csHigh();
@@ -146,11 +144,11 @@ void Flash::_setUnlock(memSize_t memSize, uint32_t bAddress)
 	{
 		case SECTOR:
 		case BLOCK:
-			SPI.transfer(BLOCK_SECTOR_UNLOCK);
+			mySPI.transfer(BLOCK_SECTOR_UNLOCK);
 			_spiSendAddr(bAddress);
 		break;
 		case GLOBAL:
-			SPI.transfer(GLOBAL_BLOCK_SECTOR_UNLOCK);
+			mySPI.transfer(GLOBAL_BLOCK_SECTOR_UNLOCK);
 		break;
 	}
 	csHigh();
@@ -159,9 +157,9 @@ void Flash::_setUnlock(memSize_t memSize, uint32_t bAddress)
 bool Flash::_readSectorLock(uint32_t addr)
 {
 	csLow();
-	SPI.transfer(READ_BLOCK_SECTOR_LOCK);
+	mySPI.transfer(READ_BLOCK_SECTOR_LOCK);
 	_spiSendAddr(addr);
-	uint8_t reg = SPI.transfer(0);
+	uint8_t reg = mySPI.transfer(0);
 	csHigh();
 	return reg;
 }

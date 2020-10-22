@@ -1,15 +1,23 @@
 #ifndef _H_FLAH_MEM_
 #define _H_FLAH_MEM_
 #include <Arduino.h>
-
-
+#include <SPI.h>
 
 #define NON_VOLATILE 0
 #define VOLATILE     1
 
 #define BUSY_BIT         0
 #define WRITING_BIT      1
-#define WPS_BIT          2   
+#define WPS_BIT          2  
+
+#if defined(ARDUINO_ARCH_STM32)
+  SPIClass mySPI;
+#elif defined(ARDUINO_ARCH_AVR)
+  #define mySPI SPI
+#endif  
+
+#define csLow() (digitalWrite(_csPin, LOW))
+#define csHigh() (digitalWrite(_csPin, HIGH))
 
 typedef enum memSchema
 {
@@ -25,13 +33,12 @@ typedef enum memSize
     GLOBAL,
 }memSize_t;
 
-#define csLow() (digitalWrite(_csPin, LOW))
-#define csHigh() (digitalWrite(_csPin, HIGH))
 
 class Flash
 {
   public:
-    Flash(byte chipSelect);
+    Flash(uint8_t cs);
+    Flash(uint8_t mosi, uint8_t miso, uint8_t sck, uint8_t cs);
     void begin();
     void read(uint32_t addr, uint8_t *buf, uint16_t len);
     void write(uint32_t addr, uint8_t *buf, uint16_t len);

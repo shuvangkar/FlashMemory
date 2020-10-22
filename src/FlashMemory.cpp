@@ -1,6 +1,4 @@
 #include "FlashMemory.h"
-#include <SPI.h>
-#include <SPI.h>
 #include "FlashRegisters.h"
 
 #define FLASH_DEBUG
@@ -15,9 +13,19 @@
 
 
 
-Flash::Flash(byte chipSelect)
+Flash::Flash(uint8_t cs)
 {
-  _csPin = chipSelect;  
+  _csPin = cs;  
+}
+
+Flash::Flash(uint8_t mosi, uint8_t miso, uint8_t sck, uint8_t cs)
+{
+#if defined(ARDUINO_ARCH_STM32)
+  mySPI.setMOSI(mosi);
+  mySPI.setMISO(miso);
+  mySPI.setSCLK(sck);
+#endif
+  _csPin = cs;
 }
 
 void Flash::begin()
@@ -25,10 +33,14 @@ void Flash::begin()
   pinMode(_csPin, OUTPUT);
   csHigh();
 
-  SPI.begin();
-  SPI.setDataMode(0);
-  SPI.setBitOrder(MSBFIRST);
-  SPI.setClockDivider(SPI_CLOCK_DIV4);
+  mySPI.begin();
+  mySPI.setDataMode(SPI_MODE0);
+  mySPI.setBitOrder(MSBFIRST);
+#if defined(ARDUINO_ARCH_AVR)
+  mySPI.setClockDivider(SPI_CLOCK_DIV4);
+#elif defined(ARDUINO_ARCH_STM32)
+  mySPI.setClockDivider(SPI_CLOCK_DIV32);
+#endif
   delay(1);
 
   _writeStatusReg(1,0x00);
@@ -62,11 +74,11 @@ void Flash::read(uint32_t addr, uint8_t *buf, uint16_t len)
 	uint8_t *ptr = buf;
 	_busyWait();
 	csLow();
-	SPI.transfer(FLASH_READ_DATA);
+	mySPI.transfer(FLASH_READ_DATA);
 	_spiSendAddr(addr);
 	for (uint16_t i = 0; i < len; i++)
 	{
-		ptr[i] = SPI.transfer(0);
+		ptr[i] = mySPI.transfer(0);
 	}
 	csHigh();
 }
@@ -83,11 +95,11 @@ void Flash::write(uint32_t addr, uint8_t *buf, uint16_t len)
 		_busyWait();
 		_writeEnable();
 		csLow();
-		SPI.transfer(FLASH_PAGE_PROGRAM);
+		mySPI.transfer(FLASH_PAGE_PROGRAM);
 		_spiSendAddr(addr);
 		for( uint16_t i = 0; i < N ; i++)
 		{
-			SPI.transfer(ptr[i + offset]);
+			mySPI.transfer(ptr[i + offset]);
 		}
 		csHigh();
 		addr += N;
@@ -146,7 +158,7 @@ void Flash::eraseChip()
   debugFlashln(F("Erasing Chip.."));
   _writeEnable();
   csLow();
-  SPI.transfer(FLASH_CHIP_ERASE);
+  mySPI.transfer(FLASH_CHIP_ERASE);
   csHigh();
   _writeDisable();
   _busyWait();
@@ -167,8 +179,8 @@ void Flash::eraseSector(uint32_t addr)
   	// _setUnlock(GLOBAL);
   	Serial.print(F("Status 1: "));Serial.println(_readStatusReg(1),BIN);
   	csLow();
-  	SPI.transfer(FLASH_SECTOR_ERASE);
-  	// SPI.transfer(0x52);
+  	mySPI.transfer(FLASH_SECTOR_ERASE);
+  	// mySPI.transfer(0x52);
   	_spiSendAddr(addr);
     csHigh();
 
