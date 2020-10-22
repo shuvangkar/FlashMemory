@@ -11,14 +11,7 @@
 #define WRITING_BIT      1
 #define WPS_BIT          2  
 
-#if defined(ARDUINO_ARCH_STM32)
-  SPIClass mySPI;
-#elif defined(ARDUINO_ARCH_AVR)
-  #define mySPI SPI
-#endif  
 
-#define csLow() (digitalWrite(_csPin, LOW))
-#define csHigh() (digitalWrite(_csPin, HIGH))
 
 typedef enum memSchema
 {
@@ -80,5 +73,8 @@ class Flash
 
     uint32_t _getNextAddr(uint32_t currentAddr);// the function returns next address for similar type of packet,return zero if no memory available
 };
+
+
+
 #endif
 
