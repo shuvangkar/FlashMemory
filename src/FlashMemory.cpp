@@ -25,6 +25,12 @@ Flash::Flash(uint8_t cs)
   _csPin = cs;  
 }
 
+Flash::Flash(uint8_t cs, hold)
+{
+  _csPin = cs; 
+  _holdPin = hold;
+}
+
 Flash::Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs)
 {
 #if defined(ARDUINO_ARCH_STM32)
@@ -39,6 +45,11 @@ void Flash::begin()
 {
   pinMode(_csPin, OUTPUT);
   csHigh();
+  if(_holdPin != 255)
+  {
+    pinMode(_holdPin, OUTPUT);
+    digitalWrite(_holdPin, HIGH);
+  } 
 
   mySPI.begin();
   mySPI.setDataMode(SPI_MODE0);
@@ -74,6 +85,16 @@ void Flash::begin()
   
   //reg = _readStatusReg(3);
   // _writeStatusReg(3, 0x00);
+}
+
+void Flash::hold()
+{
+  digitalWrite(_holdPin, LOW);
+}
+
+void Flash::holdRelease()
+{
+  digitalWrite(_holdPin, HIGH);
 }
 
 void Flash::read(uint32_t addr, uint8_t *buf, uint16_t len)

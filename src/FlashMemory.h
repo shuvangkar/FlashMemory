@@ -32,6 +32,7 @@ class Flash
 {
   public:
     Flash(uint8_t cs);
+    Flash(uint8_t cs, hold);
     Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs);
     void begin();
     void read(uint32_t addr, uint8_t *buf, uint16_t len);
@@ -46,9 +47,12 @@ class Flash
     
     void eraseChip();
     void eraseSector(uint32_t addr);
+    void hold();
+    void holdRelease();
     
   private:
     byte _csPin;
+    byte _holdPin = 255;
 
     void  _softReset();
     void _powerDown();
