@@ -25,7 +25,7 @@ Flash::Flash(uint8_t cs)
   _csPin = cs;  
 }
 
-Flash::Flash(uint8_t cs, hold)
+Flash::Flash(uint8_t cs, uint8_t hold)
 {
   _csPin = cs; 
   _holdPin = hold;
@@ -90,11 +90,13 @@ void Flash::begin()
 void Flash::hold()
 {
   digitalWrite(_holdPin, LOW);
+  // Serial.println(F("Flash hold"));
 }
 
 void Flash::holdRelease()
 {
   digitalWrite(_holdPin, HIGH);
+  // Serial.println(F("Flash Release"));
 }
 
 void Flash::read(uint32_t addr, uint8_t *buf, uint16_t len)

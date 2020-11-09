@@ -32,7 +32,7 @@ class Flash
 {
   public:
     Flash(uint8_t cs);
-    Flash(uint8_t cs, hold);
+    Flash(uint8_t cs, uint8_t hold);
     Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs);
     void begin();
     void read(uint32_t addr, uint8_t *buf, uint16_t len);
