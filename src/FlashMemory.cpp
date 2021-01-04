@@ -122,7 +122,6 @@ void Flash::read(uint32_t addr, uint8_t *buf, uint16_t len)
 
 void Flash::write(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-  Serial.print("-");
 	uint8_t *ptr = buf;
 	uint16_t N;
 	uint16_t pageRem = 256 - (addr % 256);
@@ -133,12 +132,10 @@ void Flash::write(uint32_t addr, uint8_t *buf, uint16_t len)
 		_busyWait();
 		_writeEnable();
 		csLow();
-    Serial.print("-");
 		mySPI.transfer(FLASH_PAGE_PROGRAM);
 		_spiSendAddr(addr);
 		for( uint16_t i = 0; i < N ; i++)
 		{
-      Serial.print("-");
 			mySPI.transfer(ptr[i + offset]);
 		}
 		csHigh();
@@ -146,7 +143,6 @@ void Flash::write(uint32_t addr, uint8_t *buf, uint16_t len)
 		offset += N;
 		len -= N;
 		pageRem = 256;
-    Serial.println(".");
 	}
 }
 
