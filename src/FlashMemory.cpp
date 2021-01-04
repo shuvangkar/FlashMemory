@@ -14,6 +14,8 @@
 	SPIClass mySPI;
 #elif defined(ARDUINO_ARCH_AVR)
   #define mySPI SPI
+#else
+  SPIClass mySPI(2);
 #endif
 
 #define csLow() (digitalWrite(_csPin, LOW))
@@ -31,7 +33,7 @@ Flash::Flash(uint8_t cs, uint8_t hold)
   _holdPin = hold;
 }
 
-Flash::Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs)
+Flash::Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs, uint32_t hold)
 {
 #if defined(ARDUINO_ARCH_STM32)
   mySPI.setMOSI(mosi);
@@ -39,6 +41,8 @@ Flash::Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs)
   mySPI.setSCLK(sck);
 #endif
   _csPin = cs;
+  _holdPin = hold;
+
 }
 
 void Flash::begin()
@@ -57,8 +61,11 @@ void Flash::begin()
 #if defined(ARDUINO_ARCH_AVR)
   mySPI.setClockDivider(SPI_CLOCK_DIV4);
 #elif defined(ARDUINO_ARCH_STM32)
-  mySPI.setClockDivider(SPI_CLOCK_DIV32);
+  mySPI.setClockDivider(SPI_CLOCK_DIV64);
+#else
+  mySPI.setClockDivider(SPI_CLOCK_DIV16);
 #endif
+  
   delay(1);
 
   _writeStatusReg(1,0x00);
@@ -115,6 +122,7 @@ void Flash::read(uint32_t addr, uint8_t *buf, uint16_t len)
 
 void Flash::write(uint32_t addr, uint8_t *buf, uint16_t len)
 {
+  Serial.print("-");
 	uint8_t *ptr = buf;
 	uint16_t N;
 	uint16_t pageRem = 256 - (addr % 256);
@@ -125,10 +133,12 @@ void Flash::write(uint32_t addr, uint8_t *buf, uint16_t len)
 		_busyWait();
 		_writeEnable();
 		csLow();
+    Serial.print("-");
 		mySPI.transfer(FLASH_PAGE_PROGRAM);
 		_spiSendAddr(addr);
 		for( uint16_t i = 0; i < N ; i++)
 		{
+      Serial.print("-");
 			mySPI.transfer(ptr[i + offset]);
 		}
 		csHigh();
@@ -136,6 +146,7 @@ void Flash::write(uint32_t addr, uint8_t *buf, uint16_t len)
 		offset += N;
 		len -= N;
 		pageRem = 256;
+    Serial.println(".");
 	}
 }
 
