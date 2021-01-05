@@ -14,8 +14,10 @@
 	SPIClass mySPI;
 #elif defined(ARDUINO_ARCH_AVR)
   #define mySPI SPI
-#else
+#elif defined(__STM32F1__)
   SPIClass mySPI(2);
+#else
+  #error " No Platform found"
 #endif
 
 #define csLow() (digitalWrite(_csPin, LOW))
@@ -45,7 +47,7 @@ Flash::Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs, uint32_t h
 
 }
 
-void Flash::begin()
+void Flash::begin(uint32_t spiSpeed)
 {
   pinMode(_csPin, OUTPUT);
   csHigh();
@@ -55,16 +57,22 @@ void Flash::begin()
     digitalWrite(_holdPin, HIGH);
   } 
 
-  mySPI.begin();
-  mySPI.setDataMode(SPI_MODE0);
-  mySPI.setBitOrder(MSBFIRST);
+  // mySPI.begin();
+  // mySPI.setDataMode(SPI_MODE0);
+  // mySPI.setBitOrder(MSBFIRST);
 #if defined(ARDUINO_ARCH_AVR)
-  mySPI.setClockDivider(SPI_CLOCK_DIV4);
+  // mySPI.setClockDivider(SPI_CLOCK_DIV4);
+  mySPI.beginTransaction(SPISettings(spiSpeed, MSBFIRST, SPI_MODE0));
+  mySPI.begin();
 #elif defined(ARDUINO_ARCH_STM32)
-  mySPI.setClockDivider(SPI_CLOCK_DIV64);
-#else
-  mySPI.setClockDivider(SPI_CLOCK_DIV16);
+  // mySPI.setClockDivider(SPI_CLOCK_DIV64);
+  mySPI.beginTransaction(_csPin, SPISettings(spiSpeed, MSBFIRST, SPI_MODE0));
+  mySPI.begin();
+#elif defined(__STM32F1__)
+  // mySPI.setClockDivider(SPI_CLOCK_DIV16);
+  mySPI.beginTransaction(_csPin, SPISettings(spiSpeed, MSBFIRST, SPI_MODE0));
 #endif
+
   
   delay(1);
 
