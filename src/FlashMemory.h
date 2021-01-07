@@ -51,6 +51,8 @@ class Flash
     void hold();
     void holdRelease();
     
+
+    bool _readSectorLock(uint32_t addr);
   private:
     byte _csPin;
     byte _holdPin = 255;
@@ -74,7 +76,7 @@ class Flash
     void _setWriteProtectSchema(schema_t schema);
     void _setLock(memSize_t memSize, uint32_t bAddress = 0);
     void _setUnlock(memSize_t memSize, uint32_t bAddress = 0);
-    bool _readSectorLock(uint32_t addr);
+    
 
     uint32_t _getNextAddr(uint32_t currentAddr);// the function returns next address for similar type of packet,return zero if no memory available
 };

@@ -88,7 +88,7 @@ void Flash::begin(uint32_t spiSpeed)
 	_writeStatusReg(2, 0x00);
 	// _writeStatusReg(3,0x00);
 
-	// _writeStatusReg(1,0b01000000);
+	// // _writeStatusReg(1,0b01000000);
 	// _setWriteProtectSchema(INDIVIDUAL_BLOCK);
 	// _setUnlock(GLOBAL);
 	// uint8_t reg = _readStatusReg(1);
@@ -213,7 +213,8 @@ void Flash::eraseChip()
 	debugFlashln(F("Erasing Chip.."));
 	_writeEnable();
 	csLow();
-	mySPI.transfer(FLASH_CHIP_ERASE);
+	// mySPI.transfer(FLASH_CHIP_ERASE);
+	mySPI.transfer(0x60);
 	csHigh();
 	_writeDisable();
 	_busyWait();
