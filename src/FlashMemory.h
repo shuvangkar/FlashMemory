@@ -33,8 +33,8 @@ class Flash
   public:
     Flash(uint8_t cs);
     Flash(uint8_t cs, uint8_t hold);
-    Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs);
-    void begin();
+    Flash(uint32_t mosi, uint32_t miso, uint32_t sck, uint32_t cs,uint32_t hold);
+    void begin(uint32_t spiSpeed);
     void read(uint32_t addr, uint8_t *buf, uint16_t len);
     void write(uint32_t addr, uint8_t *buf, uint16_t len);
     uint8_t *readPage(uint32_t pageAddr, uint8_t *buf);
