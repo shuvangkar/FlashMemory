@@ -224,18 +224,18 @@ void Flash::eraseChip()
 void Flash::eraseSector(uint32_t addr)
 {
 	// unlockSector(sectorAddr);
-	debugFlash(F("Erasing Sector "));
-	debugFlash(addr);
+	// debugFlash(F("=====>Erasing Sector "));
+	// debugFlash(addr);
 	_busyWait();
 
-	Serial.print(F("\nbStatus 1: "));
-	Serial.println(_readStatusReg(1), BIN);
+	// Serial.print(F("\nbStatus 1: "));
+	// Serial.println(_readStatusReg(1), BIN);
 	if (_writeEnable())
 	{
 		// _setUnlock(SECTOR,addr);
 		// _setUnlock(GLOBAL);
-		Serial.print(F("Status 1: "));
-		Serial.println(_readStatusReg(1), BIN);
+		// Serial.print(F("Status 1: "));
+		// Serial.println(_readStatusReg(1), BIN);
 		csLow();
 		mySPI.transfer(FLASH_SECTOR_ERASE);
 		// mySPI.transfer(0x52);
@@ -245,14 +245,14 @@ void Flash::eraseSector(uint32_t addr)
 		uint8_t status;
 		do
 		{
-			Serial.print(F("Status 1: "));
-			Serial.println(_readStatusReg(1), BIN);
+			// Serial.print(F("Status 1: "));
+			// Serial.println(_readStatusReg(1), BIN);
 			status = _getStatus(WRITING_BIT);
-			Serial.print(F("Erase status : "));
-			Serial.println(status);
+			// Serial.print(F("Erase status : "));
+			// Serial.println(status);
 		} while (status);
 		// _setLock(SECTOR,addr);
-		debugFlashln(F("Sector Erase Done"));
+		// debugFlashln(F(" | Done"));
 	}
 }
 
